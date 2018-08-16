@@ -1,0 +1,522 @@
+---
+title: "Capstone Project - Milestone Exploratory Data Analysis Report"
+author: "Pranay Sarkar"
+date: "August 16, 2018"
+output:
+  html_document:
+    fig_height: 4
+    fig_width: 9
+    keep_md: yes
+    theme: default
+  pdf_document: default
+  word_document: default
+---
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+## Executive Summary
+
+This is a Milestone report related with the Coursera Capstone Project, the target is show initial exploratory data analysis about the US dataset that include three kind of files:
+
+* Twitter
+* News
+* Blogs
+
+
+## 1. Load the Neccesary Libraries
+
+For this project we will use basicly the **quanteda**,**ggplot2**, **knitr** and **RColorBrewer**.
+
+```{r echo=TRUE}
+library(quanteda)
+library(ggplot2)
+library(knitr)
+library(RColorBrewer)
+
+#setwd("D:/001 -- Coursera/Capstone Project/Coursera-SwiftKey/final/en_US")
+set.seed(12345) # For reproducibility
+
+```
+
+## 2. Exploratory Data Analysis
+### 2.1 Basic Files Information
+
+The files that we will use in the project are bigger than **150Mbytes** each one. In order to do the exploratory data analysis and to have an acceptable runtime, I will use only **10%** of the data. 
+
+```{r echo=FALSE, cache = TRUE}
+# Let's create a data table to show the results of the Exploratory Analisys
+dt <- as.data.frame(c(filename_twitter <- "en_US.twitter.txt",
+                      filename_news <- "en_US.news.txt", 
+                      filename_blogs <- "en_US.blogs.txt"))
+colnames(dt)[1] <- "Filename"
+
+# Size of each file
+dt[,2] <- c(size.twitter.data <- file.size(filename_twitter),
+            size.news.data <- file.size(filename_news),
+            size.blogs.data <- file.size(filename_blogs))
+colnames(dt)[2] <- "Filesize"
+
+# Load the Data
+twitter.data <- readLines(filename_twitter, encoding="UTF-8", warn = FALSE)
+news.data <- readLines(filename_news, encoding="UTF-8", warn = FALSE)
+blogs.data <- readLines(filename_blogs, encoding="UTF-8", warn = FALSE)
+
+# Number of lines
+dt[,3] <- c(lines.twitter.data <- length(twitter.data),
+            lines.news.data <- length(news.data),
+            lines.blogs.data <- length(blogs.data))
+colnames(dt)[3] <- "Total Lines"
+
+## In order to do this report, we will use only 10% of the data
+twitter.data <- sample(twitter.data, size = lines.twitter.data * 0.01, replace = FALSE)
+news.data <- sample(news.data, size = lines.news.data * 0.01, replace = FALSE)
+blogs.data <- sample(blogs.data, size = lines.blogs.data * 0.01, replace = FALSE)
+
+dt[,4] <- c(lines.twitter.data <- length(twitter.data),
+            lines.news.data <- length(news.data),
+            lines.blogs.data <- length(blogs.data))
+colnames(dt)[4] <- "Subset Lines"
+```
+
+Those are the main characteristics of the files:
+
+```{r echo=TRUE, results='asis'}
+# Print the basic information about the files. 
+kable(dt)
+```
+
+According with this, we will use only *23601*, *772* and *8992* lines of **twitter**, **news** and **blogs** datasets. 
+
+### 2.2 File Content   
+
+Let's see some some examples of the content for each of the files:
+
+```{r echo=TRUE}
+twitter.data[1:3]
+news.data[1:3]
+blogs.data[1:3]
+```
+
+
+### 2.3 Character Basis Analysis 
+
+```{r echo=FALSE}
+lines_char.twitter <- as.data.frame(nchar(twitter.data[1:lines.twitter.data]))
+lines_char.twitter[,2] <- "twitter"
+colnames(lines_char.twitter) <- c("num_char","type")
+
+lines_char.blogs <- as.data.frame(nchar(blogs.data[1:lines.blogs.data]))
+lines_char.blogs[,2] <- "blogs"
+colnames(lines_char.blogs) <- c("num_char","type")
+
+lines_char.news <- as.data.frame(nchar(news.data[1:lines.news.data]))
+lines_char.news[,2] <- "news"
+colnames(lines_char.news) <- c("num_char","type")
+
+lines_char.all <- rbind(lines_char.news, 
+                        lines_char.blogs, lines_char.twitter)
+
+# Maximun, Average and Minimun number of Characters 
+dt[,5] <- c(max_char.twitter <- max(lines_char.twitter$num_char),
+            max_char.news <- max(lines_char.news$num_char),
+            max_char.blogs <- max(lines_char.blogs$num_char))
+colnames(dt)[5] <- "Max Chars per Line"
+
+dt[,6] <- c(avg_char.twitter <- median(lines_char.twitter$num_char),
+            avg_char.news <- median(lines_char.news$num_char),
+            avg_char.blogs <- median(lines_char.blogs$num_char))
+colnames(dt)[6] <- "Avg Chars per Line"
+
+dt[,7] <- c(min_char.twitter <- min(lines_char.twitter$num_char),
+            min_char.news <- min(lines_char.news$num_char),
+            min_char.blogs <- min(lines_char.blogs$num_char))
+colnames(dt)[7] <- "Min Chars per Line"
+```
+
+Let's see some information regarding the amount of characters per line for each dataset:
+
+```{r echo=TRUE, results='asis'}
+kable(dt)
+```
+
+We can see that the longest line belongs to **blogs** dataset (*4596*), but the longest in average is the **news** dataset (*188*), and the maximun for **twitter** is already *140* (the maximun amount defined in the social media platform, until now). 
+
+Let's make some plots in order to see that:
+
+```{r echo=TRUE}
+# Print Histogram of Number of Characters per Line
+ggplot(data=lines_char.all, aes(x=num_char, fill=type)) +
+  geom_histogram() +
+  facet_wrap(~ type, ncol = 1, scales="free") +
+  labs(title="Histogram for Number of Characters per Line") +
+  labs(x="Number of Characters",y="Number of Lines") 
+
+ggplot(data=lines_char.all, aes(x=num_char, fill=type, colour=type)) +
+  geom_freqpoly() +
+  labs(title="Histogram for Number of Characters per Line") +
+  labs(x="Number of Characters",y="Number of Lines") 
+```
+
+
+
+### 2.4 Basic Words Analysis 
+
+Let's see some characteristics about the amount of words per line. For this step, we consider a "word" any group of characters separated by " ". We will use the following function to count the number of words per line:
+
+
+```{r echo=TRUE}
+f_num_words <- function(x) length(unlist(strsplit(x,split=" ")))
+```
+
+Let's see the minimun, average and maximun amount of words per line for each type of files:
+
+```{r echo=FALSE}
+lines_word.twitter <- as.data.frame(unlist(lapply(twitter.data, f_num_words)))
+lines_word.twitter[,2] <- "twitter"
+colnames(lines_word.twitter) <- c("num_words","type")
+
+lines_word.blogs <- as.data.frame(unlist(lapply(blogs.data, f_num_words)))
+lines_word.blogs[,2] <- "blogs"
+colnames(lines_word.blogs) <- c("num_words","type")
+
+lines_word.news <- as.data.frame(unlist(lapply(news.data, f_num_words)))
+lines_word.news[,2] <- "news"
+colnames(lines_word.news) <- c("num_words","type")
+
+lines_word.all <- rbind(lines_word.news,lines_word.blogs,lines_word.twitter)
+
+# Maximun, Average and Minimun number of Words 
+dt[,8] <- c(max(lines_word.twitter$num_words),
+            max(lines_word.news$num_words),
+            max(lines_word.blogs$num_words))
+colnames(dt)[8] <- "Max Words per Line"
+
+dt[,9] <- c(median(lines_word.twitter$num_words),
+            median(lines_word.news$num_words),
+            median(lines_word.blogs$num_words))
+colnames(dt)[9] <- "Avg Words per Line"
+
+dt[,10] <- c(min(lines_word.twitter$num_words),
+            min(lines_word.news$num_words),
+            min(lines_word.blogs$num_words))
+colnames(dt)[10] <- "Min Words per Line"
+```
+
+
+```{r echo=TRUE, results='asis'}
+kable(dt)
+```
+
+The results are similar to the previous character analysis, in terms of *average words per line*, **blogs** and **news** are very similar (*29* and *32*), and the *maximun words per line* for **blogs** dataset is very big compare with the others (*715* compare to *135* and *39*).
+
+Let's see that information with some plots:
+
+```{r echo=TRUE}
+ggplot(data=lines_word.all,aes(x=num_words, fill=type)) +
+  geom_histogram() +
+  facet_wrap(~ type, ncol = 1, scales="free") +
+  labs(title="Histogram for Number of Words per Line") +
+  labs(x="Number of Words per Line",y="Frequency") 
+
+ggplot(data=lines_word.all,aes(x=num_words,fill=type,colour=type)) +
+  geom_freqpoly() +
+  labs(title="Histogram for Number of Words per Line") +
+  labs(x="Number of Words per Line",y="Frequency") 
+```
+
+### 2.5 Corpora
+
+Let's built the corpora for each of the files to be used in future analysis, using the *corpus()* function of **quanteda** library:
+
+```{r echo=TRUE}
+twitter.docvars <- data.frame(Source = rep("twitter",lines.twitter.data))
+blogs.docvars <- data.frame(Source = rep("blogs",lines.blogs.data))
+news.docvars <- data.frame(Source = rep("news",lines.news.data))
+
+twitter.corpus <- corpus(twitter.data, docvars = twitter.docvars)
+news.corpus <- corpus(news.data, docvars = news.docvars)
+blogs.corpus <- corpus(blogs.data, docvars = blogs.docvars)
+
+## Let's see information about the corpus
+summary(twitter.corpus,1)
+summary(news.corpus,1)
+summary(blogs.corpus,1)
+```
+
+We can see that the **twitter**, **news** and **blogs** *Corpus* have *23601**, **772* and *8992* documents (equal to number of lines of each dataset).
+
+With **quanteda** packages is very simple to create a new Corpus combining the previous ones:
+
+```{r echo=TRUE}
+all.corpus <- (twitter.corpus + news.corpus) + blogs.corpus
+summary(all.corpus,1)
+```
+
+We can see that this new Corpus have have *33365* documents (equal to add the number of documents of each corpus).
+
+### 2.6 Word Analysis with Document Feature Matrix
+
+Let's built the document-feature matrix using the *dfm()* function to analyze the features and frequencies. We will also clean the data by doing the following: 
+
+* Lower all the characters (*toLower = TRUE*)
+* Remove numbers (*removeNumbers = TRUE*)
+* Remove punctuation symbols (*removePunct = TRUE*)
+* Remove separators (*removeSeparators = TRUE*)
+* Remove twitter characters (*removeTwitter = TRUE*)
+* Remove bad/profanity english words (*stopwords("english")*)
+
+
+```{r echo=TRUE}
+all.dfm <- dfm(all.corpus, 
+             toLower = TRUE,
+             removeNumbers = TRUE, 
+             removePunct = TRUE, 
+             removeSeparators = TRUE,
+             removeTwitter = TRUE, 
+             stem = FALSE, 
+             language = "english",
+             ignoredFeatures = stopwords("english"))
+## Total number of features (words)
+print(num.words.all <- nfeature(all.dfm))
+## Information of dfm
+head(all.dfm,5)
+```
+
+We can see that the total number of features is *44119*, that's is the number of words that are included in the Corpora.
+
+### 2.6.1 Top 20 Words
+
+We can use the data feature matrix created previously to analyze the *frequency* and *accumulated frequency* of words in the Copora.
+
+```{r echo=FALSE}
+all.words <- data.frame(topfeatures(all.dfm,num.words.all))
+colnames(all.words)[1] <- "freq"
+
+all.words[,2] <- cumsum(all.words)
+colnames(all.words)[2] <- "acumfreq"
+
+total.words <- sum(all.words$freq)
+
+all.words[,3] <- all.words$freq / total.words * 100
+colnames(all.words)[3] <- "perfreq"
+
+all.words[,4] <- all.words$acumfreq / total.words * 100
+colnames(all.words)[4] <- "acumperfreq"
+
+all.words[,5] <- rownames(all.words)
+colnames(all.words)[5] <- "word"
+
+all.words[,6] <- seq.int(nrow(all.words))
+colnames(all.words)[6] <- "numword"
+```
+
+Let's see the top-20 words and the frequency related information:
+
+```{r echo=TRUE}
+head(all.words,20)
+```
+
+We can see the top-20 words, the meaning of each of the columns is:
+
+* *freq*: number of times that the word appears in the Corpora.
+
+* *acumfreq*: accumulated frequency (considering the previous n-1 words).
+
+* *perfreq*: percentage frequency of the work in the Corpora. 
+
+* *acumperfreq*: accumulated percentage frequency (considering the previous n-1 words).
+
+* *numwords*: the number of words included in the accumulated values.
+
+For example, we can see that the word **now** in row **11**, appears *1469* times into the Corpora (*freq*), this value is equivalent to *0,39%* of the total corpora size (*perfreq*). Because the table is sorted, the *acumulated frequency* of the word **now** is *20839*, it means the sum of all the previous words *frecuencies* in the table plus it's *freq* value: *19370 + 1469 = 20839* (*acumfreq*) that is equivalent to *5.55%* of the total corpora size (*acumperfreq*). Also, we can see that in order to cover the *5.55%* of the Corpora we need only **11** words (*numword*).
+
+Let's plot the top-20 words and also make the worcloud:
+
+```{r echo=TRUE}
+## Plot Top 20 Words
+ggplot(data=head(all.words,20),
+       aes(x=reorder(word,-freq), y=freq)) +
+  geom_bar(stat ="identity", position= "identity") +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0, hjust = 1,size=12)) +
+  labs(title="Top 20 Words") +
+  labs(x="Top Words",y="Count") 
+
+## Plot Worcloud with top 20 words
+plot(all.dfm, max.words = 20, random.order = FALSE, colors = brewer.pal(6, "Dark2"))
+```
+
+### 2.7 Amount of Unique Words needed to Cover all Word Instances in the Language
+
+We can use the previous information to validate how many unique words we need in order
+to cover **50%** and **90%** of the total language (the *numwords* associated with the desired *acumfreq* value): 
+
+```{r echo=TRUE}
+head(subset(all.words, acumperfreq >= 50 & acumperfreq <= 51),1)
+head(subset(all.words, acumperfreq >= 90 & acumperfreq <= 91),1)
+```
+
+We can see that we only need aproximately **820** words in order to cover the **50%**, and **13493** to cover the **90%**.
+
+In the following plot we can observe this:
+
+```{r echo=TRUE}
+ggplot(data=all.words, aes(x=numword, y=acumperfreq)) +
+  geom_line(stat ="identity", position= "identity",size=1.2, colour="black") +
+  geom_text(data=subset(all.words, numword == 820 | numword == 13493),
+            aes(label=paste("(",acumperfreq,",",numword,")")), 
+            hjust = 1.2, vjust = -0.4) +
+  geom_vline(xintercept = 820, color="red") +
+  geom_hline(aes(yintercept=50), color="red") +
+  geom_vline(xintercept = 13493, color="blue") +
+  geom_hline(aes(yintercept=90), color="blue") +
+  labs(title="Number of Words needed to Cover all Words Instances") +
+  scale_x_continuous( trans = "log10") +   
+  labs(x="Number of Words",y="%Coverage")
+```
+
+We can use those results in the prediction algorithm in order to speed up the processing time. 
+
+## 2.8 N-grams
+
+Let's analyze the n-grams of the dataset. 
+
+### 2.8.1 Uni-grams
+
+In order to check the unigrams, bigrams and trigrams of the all dataset, we will use the function *dfm()* from **quanteda** using the *ngram* option parameter. 
+
+By default, the *dfm()* function calculate the unigrams of the texts, so the results that we got in the section **2.6 Word Analysis with Document Feature Matrix** correspond to the **unigrams** of the Corpora.  
+Let's calculate the Bigrams and Trigrams of the corpora and plot the top-20 n-grams and wordcloud for each one:
+
+### 2.8.2 Bigrams
+
+We will calculate the **bigrams** of the Corpora trought the *dfm()* function, using the same cleaning options for the unigrams.
+
+```{r echo=TRUE}
+all.bigrams.dfm <- dfm(all.corpus, 
+             toLower = TRUE,
+             removeNumbers = TRUE, 
+             removePunct = TRUE, 
+             removeSeparators = TRUE,
+             removeTwitter = TRUE, 
+             stem = FALSE, 
+             language = "english",
+             ignoredFeatures = stopwords("english"),
+             ngrams=2)
+```
+
+We can see that exists **313479** features.
+
+Let's plot the **top-20 bigrams** and the *wordcloud* related:
+
+```{r echo=TRUE}
+top20.bigrams <- data.frame(topfeatures(all.bigrams.dfm,20))
+colnames(top20.bigrams)[1] <- "freq"
+
+top20.bigrams[,2] <- rownames(top20.bigrams)
+colnames(top20.bigrams)[2] <- "bigrams"
+
+ggplot(data=top20.bigrams,aes(x=reorder(bigrams,-freq), y=freq)) +
+  geom_bar(stat ="identity", position= "identity") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title="Top 20 Bigrams") +
+  labs(x="bigrams",y="Count") 
+
+## Plot Worcloud with top 20 words
+plot(all.bigrams.dfm, max.words = 20, random.order = FALSE, 
+     rot.per=0.35,scale=c(3,0.5),
+     colors = brewer.pal(6, "Dark2"))
+```
+
+### 2.8.3 Trigrams
+
+Let's calculate the **trigrams** of the Corpora, using the same *dfm()* function:
+
+```{r echo=TRUE}
+all.trigrams.dfm <- dfm(all.corpus, 
+             toLower = TRUE,
+             removeNumbers = TRUE, 
+             removePunct = TRUE, 
+             removeSeparators = TRUE,
+             removeTwitter = TRUE, 
+             stem = FALSE, 
+             language = "english",
+             ignoredFeatures = stopwords("english"),
+             ngrams=3)
+```
+
+We can see that exists **531460** features.
+
+Let's plot the **top-20 trigrams** and the *wordcloud* related:
+
+```{r echo=TRUE}
+top20.trigrams <- data.frame(topfeatures(all.trigrams.dfm,20))
+colnames(top20.trigrams)[1] <- "freq"
+
+top20.trigrams[,2] <- rownames(top20.trigrams)
+colnames(top20.trigrams)[2] <- "trigrams"
+
+ggplot(data=top20.trigrams,aes(x=reorder(trigrams,-freq), y=freq)) +
+  geom_bar(stat ="identity", position= "identity") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title="Top 20 Trigrams") +
+  labs(x="trigrams",y="Count")
+## Plot Worcloud with top 20 words
+plot(all.trigrams.dfm, max.words = 20, random.order = FALSE, scale=c(2,0.5),
+     colors = brewer.pal(6, "Dark2"))
+```
+
+We can see that some of the trigrams should be cleaned, words like **happy mother's day** and **happy mothers day** are the same and should be considered as equal, also words like **please please please** and **love love love** must be handled. This will be take into consideration for next steps.
+
+## 3. How to Identify and Clean Non-english Words (Work in progress)
+
+One option to filter the Corpora and remove the **non-english words** will be using a english dictionary to do that. Is neccesary to find a english dictionary and work on it.
+
+Another choice is a library named **textcat** that make text cathegorization based on n-grams thought the function *textcat()*.
+Let's see how this works:
+
+```{r echo=TRUE}
+library(textcat)
+textcat(c("This is a english sentence",
+          "Esto es una oracion en espanol",
+          "This is esto es datos",
+          "madre",
+          "father",
+          "bonjour",
+          "merci"),
+        p=ECIMCI_profiles)
+```
+
+Is working good but is not perfect. Let's see how this works with our data:
+
+```{r echo=TRUE}
+all.tokens <- toLower(
+  tokenize(all.corpus, what = "fasterword",
+         removeNumbers = TRUE, 
+         removePunct = TRUE, 
+         removeSeparators = TRUE,
+         removeTwitter = TRUE, 
+         removeURL = TRUE))
+all.tokens[1:8]     
+textcat(all.tokens[1:8], p=ECIMCI_profiles)
+```
+
+There still some problems that I need to fix regarding characters encoding (some characters that the function doesn't handle). This texts is a good example of this issue, the function doesn't work with it:
+```{r echo=TRUE}
+all.corpus[9]
+```
+
+
+## 4. Future Work - Prediction Algorithm
+
+The next steps that I will perform to create a prediction algortihm will be:
+
+* Considering how to fix the issues with the *textcat()* function to remove the non-english words.
+
+* Considering how to reduce the amount of n-grams using steamming or addiotional filtering to improve the runtime of the prediction algorithm.
+
+* Consider how to create the prediction algorithm using the n-grams and how to predict the words that can not be handle by the algorithm perse.
+
+* Design the GUI of the Shiny App and star working on it, taking into consideration runtime and memory restrictions.

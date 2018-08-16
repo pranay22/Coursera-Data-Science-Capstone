@@ -1,0 +1,75 @@
+Predictor!: A NLP based Shiny App to Predict Next Word
+========================================================
+author: Pranay Sarkar 
+date: 2018-08-16
+width: 1440
+height: 900
+
+
+Overview
+========================================================
+<small>
+**Predictor!** is a Natural Language Processing (NLP) App that predicts the next word to be typed by the user based on a US dataset of blogs, twitter and news datasets (the *Corpora*).
+
+This application was built as part of the **Capstone Switfkey Project** 
+the final stage of the **Coursera Data Science Specialization**.
+
+The app is available at: **https://pranay22.shinyapps.io/predictor/**
+
+</small>
+
+
+The Solution
+========================================================
+<small>
+The most important aspects related with **Predictor!** App are:
+
+- The *Corpora* was cleaned and subsetted to **80%**.
+- The App use a **Quadgram Model** that include: Unigrams, Bigrams, Trigrams and Quadgrams. This model was created using the **quanteda** package.
+- All the probabilities are **pre-calculated** using the **Kneser-ney Smoothing Algoritm** and **Stupid Backoff** mechanism in case that the word doesn't exists into the corpora.
+- The **Probability Calculation** was made on a iterative implementation using the **data.table** package. 
+- The **prediction** could be made for **non-complete** words, that means, when the user start typing the letters the application will show as a prediction the one with biggest probability that match it.
+
+</small>
+
+Kneser-ney Smoothing Algorithm
+========================================================
+<small>
+We use the following **Kneser-ney implementation** for:
+
+**Lowest Order (Unigrams) Equation:**
+
+$${P_{KN}^{1}(w_{i})} = \frac{N_{1+}({\bullet} w_{i})} 
+{ N_{1+}({\bullet} {\bullet})}$$
+
+**Second Highest Ngrams to Bigrams Equation:**
+
+$$P_{KN}^{n}(w_{i}{\mid}w_{i-n+1}^{i}) = 
+\frac{max\left\{ N_{1+}(\bullet w_{i-n+1}^{i} )-{\delta}_{n},0\right\} }
+{ N_{1+}(\bullet w_{i-n+1}^{i-1}\bullet)} + 
+\frac{{\delta}_{n}} {N_{1+}(\bullet w_{i-n+1}^{i-1}\bullet)} 
+N_{1+}(w_{i-n+1}^{i-1}\bullet)P_{KN}^{n-1}(w_{i}{\mid}w_{i-n+2}^{i-1})$$
+
+**Highest Order Equation:**
+
+$$P_{KN}^{n}(w_{i}{\mid}w_{i-n+1}^{i}) = 
+\frac{max\left\{c(w_{i-n+1}^{i}) -{\delta}_{n},0\right\} } 
+{ \sum_{w'_{i}} c(w_{i-n+1}^{i-1},{w'_{i}})} + \frac{{\delta}_{n}} {\sum_{w'_{i}} c(w_{i-n+1}^{i-1},{w'_{i}})} 
+N_{1+}(w_{i-n+1}^{i-1}\bullet )P_{KN}^{n-1}(w_{i}{\mid}w_{i-n+2}^{i-1})$$
+</small>
+
+Web Application Functionality
+========================================================
+<small>
+The app offer to the user several parameters to choose:
+ - Two **Sizes of Probability Tables**: with **Freq >= 5** and **Freq > 1** in order to compare if a small one affect the prediction task.
+ - Two **Prediction Methods**: based on **Complete** or **Incomplete** Words to have a more interactive behavior. 
+ - The **Minimun Probability Range** of the words to be considered and 
+ - The **Maximun Number of Words** to get.
+
+And also provide:
+ - A table with the **predicted words** and a  **wordcloud** plot of those words. 
+ - The **top predicted word** is showed in **bold blue** in the next line to the user text input box. 
+ - Is possible to **search the content** of the **ngrams probability tables**.
+ 
+</small>

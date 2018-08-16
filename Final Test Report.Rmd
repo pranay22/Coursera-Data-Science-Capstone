@@ -1,0 +1,435 @@
+---
+title: "Capstone Project - Final Test Report"
+author: "Pranay Sarkar"
+date: "August 16, 2018"
+output:
+  html_document:
+    fig_height: 4
+    fig_width: 9
+    keep_md: yes
+    theme: default
+  pdf_document: default
+  word_document: default
+---
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=TRUE)
+```
+
+## Executive Summary
+
+This is a Test Final Report related with the Coursera Capstone Project, the target is show the total running steps of the implementation.
+
+
+## 1. Load the Neccesary Libraries
+
+For this project we will use basicly the **quanteda**,**ggplot2**, **data.table** and **knitr**.
+
+```{r init , echo=TRUE}
+library(quanteda)
+library(data.table)
+library(ggplot2)
+library(knitr)
+
+wd.R <- "D:/001 -- Coursera/Capstone Project/Coursera---Data-Science---Capstone-Project"
+
+setwd(wd.R)
+
+source("Create Ngrams Data Table vFinal.R")
+source("Knersey-ney Optimazed vFinal.R")
+source("Main Predict Word vFinal.R")
+source("Pred Next Word Regex vFinal.R")
+source("Pred Next Word vFinal.R")
+
+# For reproducibility
+set.seed(12345)
+
+```
+
+## 2. Create Ngram Data Table
+
+We will create the ngrams table for our quadgram model using **80%** of the corpora.
+
+### 2.1 Load and Clean the Data
+
+This function load the 80% and clean the data:
+
+```{r createdata,echo=TRUE, cache = TRUE}
+list_filenames <- c("en_US.blogs.txt","en_US.news.txt","en_US.twitter.txt")
+create_mydata(list_filenames, 80) 
+```
+
+An example of 'mydata' content is: 
+
+```{r echo=TRUE, cache = TRUE}
+mydata[1:5] 
+```
+
+
+### 2.2 Create All Tokens
+
+One important step is create alltokens in order to be used to generate the ngrams (unigrams, bigrams, trigrams and quadgrams)
+
+```{r createalltokens,echo=TRUE, cache = TRUE}
+create_alltokens(list_files,80)
+```
+
+An example of 'alltokens' content is:
+
+```{r echo=TRUE, cache = TRUE}
+alltokens[1:5] 
+```
+
+### 2.3 Create Unigrams Frequency Table 
+
+To create the unigrams frequency table (dfm), we will use the alltokens to create the unigrams, clean it removing fake unigrams and finally create the dfm.
+
+#### 2.3.1 Create and Clean Unigrams
+
+Let's create and clean the unigrams:
+
+```{r create_unigram, echo=TRUE, cache = TRUE}
+create_ngram(n=1,list_filenames,training_set= 80) 
+```
+
+
+```{r clean_unigram, echo=TRUE, cache = TRUE}
+clean_ngram(n=1,list_filenames,training_set= 80) 
+```
+
+An example of 'uni.ngram' content is:
+
+```{r echo=TRUE, cache = TRUE}
+uni.ngram[1:5] 
+```
+
+
+#### 2.3.2 Create and Trim Uni-dfm
+
+Let's create and Trim the unigrams dfm:
+
+```{r create_unidfm,echo=TRUE, cache = TRUE}
+create_dfm(n=1,list_filenames,training_set= 80)
+```
+
+
+```{r trim_unidfm,echo=TRUE, cache = TRUE}
+trim_dfm(n=1,list_filenames,training_set= 80,mincount=1)
+```
+
+
+#### 2.3.3 Create Unigram Data Table with Tokens and Frequency
+
+Finally let's create the unigram data table with tokens and frequency:
+
+```{r create_uniDT,echo=TRUE, cache = TRUE}
+create_DT(n=1,list_filenames,training_set= 80,mincount=1)
+```
+
+An example of unigrams frequency and tokens table content is:
+
+```{r echo=TRUE, results='asis'}
+kable(DT.uni[order(-freq)][1:10])
+```
+
+
+
+### 2.4 Create Bigrams Frequency Table 
+
+To create the bigrams frequency table (dfm), we will use the alltokens to create the bigrams, clean it removing fake bigrams and finally create the dfm.
+
+#### 2.4.1 Create and Clean Bigrams
+
+Let's create and clean the bigrams:
+
+```{r create_bigram, echo=TRUE, cache = TRUE}
+create_ngram(n=2,list_filenames,training_set= 80)
+```
+
+
+```{r clean_bigram, echo=TRUE, cache = TRUE}
+clean_ngram(n=2,list_filenames,training_set= 80)
+```
+
+An example of 'bi.ngram' content is:
+
+```{r echo=TRUE, cache = TRUE}
+bi.ngram[1:5] 
+```
+
+
+#### 2.4.2 Create and Trim Bi-dfm
+
+Let's create and Trim the bigrams dfm:
+
+```{r create_bidfm,echo=TRUE, cache = TRUE}
+create_dfm(n=2,list_filenames,training_set= 80)
+```
+
+
+```{r clean_unidfm,echo=TRUE, cache = TRUE}
+trim_dfm(n=2,list_filenames,training_set= 80,mincount=1)
+```
+
+
+#### 2.4.3 Create Bigram Data Table with Tokens and Frequency
+
+Finally let's create the bigram data table with tokens and frequency:
+
+```{r create_biDT,echo=TRUE, cache = TRUE}
+create_DT(n=2,list_filenames,training_set= 80,mincount=1)
+```
+
+An example of bigrams frequency and tokens table content is:
+
+```{r echo=TRUE, results='asis'}
+kable(DT.bi[order(-freq)][1:10])
+```
+
+
+
+### 2.5 Create Trigrams Frequency Table 
+
+To create the trigrams frequency table (dfm), we will use the alltokens to create the trigrams, clean it removing fake trigrams and finally create the dfm.
+
+#### 2.5.1 Create and Clean Trigrams
+
+Let's create and clean the trigrams:
+
+```{r create_trigram,echo=TRUE, cache = TRUE}
+create_ngram(n=3,list_filenames,training_set= 80)
+```
+
+
+```{r clean_trigram,echo=TRUE, cache = TRUE}
+clean_ngram(n=3,list_filenames,training_set= 80)
+```
+
+An example of 'tri.ngram' content is:
+
+```{r echo=TRUE, cache = TRUE}
+tri.ngram[1:5] 
+```
+
+
+#### 2.5.2 Create and Trim Tri-dfm
+
+Let's create and Trim the trigrams dfm:
+
+```{r create_tridfm,echo=TRUE, cache = TRUE}
+create_dfm(n=3,list_filenames,training_set= 80)
+```
+
+
+```{r trim_tridfm,echo=TRUE, cache = TRUE}
+trim_dfm(n=3,list_filenames,training_set= 80,mincount=1)
+```
+
+#### 2.5.3 Create Trigram Data Table with Tokens and Frequency
+
+Finally let's create the trigrams data table with tokens and frequency:
+
+```{r create_triDT,echo=TRUE, cache = TRUE}
+create_DT(n=3,list_filenames,training_set= 80,mincount=1)
+```
+
+An example of trigrams frequency and tokens table content is:
+
+```{r echo=TRUE, results='asis'}
+kable(DT.tri[order(-freq)][1:10])
+```
+
+
+
+
+
+### 2.6 Create Quadgrams Frequency Table 
+
+To create the quadgrams frequency table (dfm), we will use the alltokens to create the quadgrams, clean it removing fake quadgrams and finally create the dfm.
+
+#### 2.6.1 Create and Clean Quadgrams
+
+Let's create and clean the quadgrams:
+
+```{r create_quadgram,echo=TRUE, cache = TRUE}
+create_ngram(n=4,list_filenames,training_set= 80)
+```
+
+
+```{r clean_quadgram,echo=TRUE, cache = TRUE}
+clean_ngram(n=4,list_filenames,training_set= 80)
+```
+
+An example of 'quad.ngram' content is:
+
+```{r echo=TRUE, cache = TRUE}
+quad.ngram[1:5] 
+```
+
+
+#### 2.6.2 Create and Trim Quad-dfm
+
+Let's create and Trim the quadgrams dfm:
+
+```{r create_quaddfm,echo=TRUE, cache = TRUE}
+create_dfm(n=4,list_filenames,training_set= 80)
+```
+
+
+```{r trim_quaddfm,echo=TRUE, cache = TRUE}
+trim_dfm(n=4,list_filenames,training_set= 80,mincount=1)
+```
+
+#### 2.6.2 Create Quadgram Data Table with Tokens and Frequency
+
+Finally let's create the quadgrams data table with tokens and frequency:
+
+```{r create_quadDT,echo=TRUE, cache = TRUE}
+create_DT(n=4,list_filenames,training_set= 80,mincount=1)
+```
+
+An example of unigrams frequency and tokens table content is:
+
+```{r echo=TRUE, results='asis'}
+kable(DT.quad[order(-freq)][1:10])
+```
+
+### 3. Calculate Probability for Each Ngram
+
+Let's calculate the Kneser-ney Probability for each ngram:
+
+### 3.1 Create Unigram Knersey-ney Probability Table
+
+```{r calculate_uniProb, echo=TRUE}
+calculate_prob_kn(n=1,training_set=80,p1=1)
+```
+
+An example of unigrams probability table content is:
+
+```{r echo=TRUE, results='asis'}
+kable(DT.uni.prob.final[order(-freq1)][1:10])
+```
+
+### 3.2 Create Bigram Knersey-ney Probability Table
+
+```{r calculate_biProb,echo=TRUE, cache = TRUE}
+calculate_prob_kn(n=2,training_set=80,p1=1)
+```
+
+An example of bigrams probability table content is:
+
+
+```{r echo=TRUE, results='asis'}
+kable(DT.bi.prob.final[order(-freq2)][1:10])
+```
+
+### 3.3 Create Trigram Knersey-ney Probability Table
+
+```{r calculate_triProb,echo=TRUE, cache = TRUE}
+calculate_prob_kn(n=3,training_set=80,p1=1)
+```
+
+An example of trigrams probability table content is:
+
+
+```{r echo=TRUE, results='asis'}
+kable(DT.tri.prob.final[order(-freq3)][1:10])
+```
+
+### 3.4 Create Quadgram Knersey-ney Probability Table
+
+
+
+```{r calculate_quadProb,echo=TRUE, cache = TRUE}
+calculate_prob_kn(n=4,training_set=80,p1=1)
+```
+
+An example of quadgrams probability table content is:
+
+
+```{r echo=TRUE, results='asis'}
+kable(DT.quad.prob.final[order(-freq4)][1:10])
+```
+
+## 4. Ngrams Probability Frequency Table Analysis
+
+Let's show the information regarding the frequency of the ngrams in the data tables:
+
+```{r dt_prob_freq,echo=TRUE, cache = TRUE}
+DT.prob.freq <- DT_prob_freq(training_set=80) 
+```
+
+
+```{r echo=TRUE, results='asis'}
+kable(DT.prob.freq)
+```
+
+## 5. Singleton Probability Table
+
+We will create two groups of probability tables to be used with the Shiny app removing:
+
+* Ngrams with frequency == 1
+* Ngrmas with frequency < 5 
+
+```{r dt_prob_sing,echo=TRUE, cache = TRUE}
+DT.prob.sing <- DT_prob_singletons(training_set=80) 
+```
+
+
+```{r echo=TRUE, results='asis'}
+kable(DT.prob.sing)
+```
+
+## 6. Prediction of Next Word
+
+Let's see some example of prediction:
+
+### 6.1 Example with Unigram
+
+```{r predic_uni1, echo=TRUE} 
+prediction1 <- predict_nextword(c("how"),p=0,n=5,training_set = 80) 
+```
+
+```{r predict_uni2, echo=TRUE, results='asis'} 
+kable(prediction1)
+```
+
+### 6.2 Example with Bigram
+
+```{r predict_bi1,echo=TRUE} 
+prediction2 <- predict_nextword(c("how","are"),p=0,n=5,training_set = 80) 
+```
+
+```{r predict_bi2,echo=TRUE, results='asis'} 
+kable(prediction2)
+```
+
+### 6.3 Example with Trigram
+
+```{r predict_tri1,echo=TRUE} 
+prediction3 <- predict_nextword(c("how","are","you"),p=0,n=5,training_set = 80) 
+```
+
+```{r predict_tri2,echo=TRUE, results='asis'}
+kable(prediction3)
+```
+
+
+## 7. Prediction of Next Word using Regex
+
+Let's see some examples of prediction using regex:
+
+```{r predict_regex,echo=TRUE} 
+prediction1 <- predict_nextword_regex(c("how","are",""),p=0,n=5,training_set = 80)
+prediction2 <- predict_nextword(c("how","are"),p=0,n=5,training_set = 80)
+prediction3 <- predict_nextword_regex(c("how","are","y"),p=0,n=5,training_set = 80)
+```
+
+
+```{r echo=TRUE, results='asis'}
+# Print the basic information about the files. 
+kable(prediction1)
+kable(prediction2)
+kable(prediction3)
+```
