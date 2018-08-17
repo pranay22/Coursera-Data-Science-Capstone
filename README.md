@@ -9,5 +9,6 @@ Contains:
 
 ## Final Test Report
 
-## Shiny App: Predictor!
+## Shiny App: Predictor
 
+ https://pranay22.shinyapps.io/predictor/
